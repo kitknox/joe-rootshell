@@ -14,6 +14,17 @@
 #include <ncurses/term.h>
 #endif
 
+#ifdef __APPLE__
+/* iOS/macOS: use curses functions directly with declarations */
+/* The actual linking is against libncurses.tbd */
+extern char *tgetstr(const char *, char **);
+extern int tgetflag(const char *);
+extern int tgetnum(const char *);
+extern char *tgoto(const char *, int, int);
+extern int tputs(const char *, int, int (*)(int));
+extern int tgetent(char *, const char *);
+#else
+
 #ifdef HAVE_CURSES_H
 #include <curses.h>
 #endif
@@ -23,7 +34,9 @@
 #include <term.h>
 #endif
 
-#endif
+#endif /* __APPLE__ */
+
+#endif /* TERMINFO */
 
 int dopadding = 0;
 char *joeterm = NULL;

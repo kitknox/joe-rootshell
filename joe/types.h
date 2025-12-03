@@ -241,7 +241,7 @@ typedef struct point P;
 typedef struct options OPTIONS;
 typedef struct macro MACRO;
 typedef struct cmd CMD;
-typedef struct entry HENTRY;
+typedef struct joe_hash_entry HENTRY;
 typedef struct Zentry ZHENTRY;
 typedef struct Hash HASH;
 typedef struct Zhash ZHASH;

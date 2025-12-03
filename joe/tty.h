@@ -52,8 +52,8 @@ struct mpx {
  */
 void ttopen(void);
 void ttopnn(void);
-extern long upc; /* Microseconds per character */
-extern long tty_baud; /* Baud rate */
+extern JOE_TLS long upc; /* Microseconds per character */
+extern JOE_TLS long tty_baud; /* Baud rate */
 
 #define TIMES 3
 #define DIVIDEND 10000000
@@ -87,9 +87,9 @@ int ttcheck(void);
 /* void ttputc(char c);  Write a character to the output buffer.  If it becomes
  * full, call ttflsh()
  */
-extern ptrdiff_t obufp; /* Output buffer index */
-extern ptrdiff_t obufsiz; /* Output buffer size */
-extern char *obuf; /* Output buffer */
+extern JOE_TLS ptrdiff_t obufp; /* Output buffer index */
+extern JOE_TLS ptrdiff_t obufsiz; /* Output buffer size */
+extern JOE_TLS char *obuf; /* Output buffer */
 
 #define ttputc(c) { obuf[obufp++] = (c); if(obufp == obufsiz) ttflsh(); }
 
@@ -138,9 +138,9 @@ void ttsusp(void);
  */
 int ttflsh(void);
 
-extern int have; /* Set if we have typeahead */
-extern char havec; /* typeahead character */
-extern int leave; /* Set if we're exiting (so don't check for typeahead) */
+extern JOE_TLS int have; /* Set if we have typeahead */
+extern JOE_TLS char havec; /* typeahead character */
+extern JOE_TLS int leave; /* Set if we're exiting (so don't check for typeahead) */
 
 #ifdef __MSDOS__
 #define ifhave bioskey(1)
@@ -196,8 +196,8 @@ extern int Baud;			/* Baud rate from joerc, cmd line or environment */
 void tickoff(void);
 void tickon(void);
 
-extern time_t last_time; /* Current time in seconds */
-extern int idleout; /* Clear to use /dev/tty for screen */
+extern JOE_TLS time_t last_time; /* Current time in seconds */
+extern JOE_TLS int idleout; /* Clear to use /dev/tty for screen */
 
 void ttstsz(int fd, ptrdiff_t w, ptrdiff_t h); /* Set window size */
 extern int nodeadjoe; /* Flag to prevent creation of DEADJOE files */

@@ -8,6 +8,16 @@
  */
 #include "types.h"
 
+/* iOS detection for ios_ioctl integration */
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST || TARGET_OS_VISION
+#ifndef JOE_IOS_SYSTEM
+#define JOE_IOS_SYSTEM 1
+#endif
+#endif
+#endif
+
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -76,11 +86,20 @@ ptrdiff_t joe_write(int fd, const void *buf, ptrdiff_t size)
 	return rt;
 }
 
+/* iOS: use ios_ioctl to intercept TIOCGWINSZ for proper terminal size */
+#ifdef JOE_IOS_SYSTEM
+extern int ios_ioctl(int fd, unsigned long request, void* arg);
+#endif
+
 int joe_ioctl(int fd, unsigned long req, void *ptr)
 {
 	int rt;
 	do {
+#ifdef JOE_IOS_SYSTEM
+		rt = ios_ioctl(fd, req, ptr);
+#else
 		rt = ioctl(fd, req, ptr);
+#endif
 	} while (rt == -1 && errno == EINTR);
 	return rt;
 }

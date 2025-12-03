@@ -6,7 +6,8 @@
  *	This file is part of JOE (Joe's Own Editor)
  */
 
-struct entry {
+/* Renamed from 'struct entry' to avoid conflict with system <search.h> */
+struct joe_hash_entry {
 	HENTRY *next;
 	const char *name;
 	ptrdiff_t hash_val;

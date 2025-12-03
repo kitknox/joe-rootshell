@@ -11,8 +11,18 @@
 #include <gpm.h>
 #endif
 
-char *exmsg = NULL;		/* Message to display when exiting the editor */
-char *xmsg;			/* Message to display when starting the editor */
+/* iOS system integration */
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST || TARGET_OS_VISION
+#include "ios_compat.h"
+#define JOE_IOS_BUILD 1
+#endif
+#endif
+
+/* Thread-local globals for ios_system thread safety */
+JOE_TLS char *exmsg = NULL;		/* Message to display when exiting the editor */
+JOE_TLS char *xmsg;			/* Message to display when starting the editor */
 int usexmouse=0;
 int xmouse=0;
 int nonotice;
@@ -20,7 +30,7 @@ int noexmsg = 0;
 int pastehack;
 int helpon;
 
-Screen *maint;			/* Main edit screen */
+JOE_TLS Screen *maint;			/* Main edit screen */
 
 /* Make windows follow cursor */
 
@@ -37,7 +47,7 @@ void dofollows(void)
 
 /* Update screen */
 
-volatile int dostaupd = 1;
+JOE_TLS volatile int dostaupd = 1;
 
 void edupd(int flg)
 {
@@ -73,9 +83,9 @@ void edupd(int flg)
 	staupd = 0;
 }
 
-static int ahead = 0;
-static int ungot = 0;
-static int ungotc = 0;
+static JOE_TLS int ahead = 0;
+static JOE_TLS int ungot = 0;
+static JOE_TLS int ungotc = 0;
 
 void nungetc(int c)
 {
@@ -86,14 +96,14 @@ void nungetc(int c)
 	}
 }
 
-MACRO *type_backtick;
+JOE_TLS MACRO *type_backtick;
 
 /* Execute a macro every nn seconds */
 
-time_t last_timer_time = 0;
-time_t cur_time;
-time_t timer_macro_delay;
-MACRO *timer_macro;
+JOE_TLS time_t last_timer_time = 0;
+JOE_TLS time_t cur_time;
+JOE_TLS time_t timer_macro_delay;
+JOE_TLS MACRO *timer_macro;
 
 MACRO *timer_play(void)
 {
@@ -105,7 +115,7 @@ MACRO *timer_play(void)
 	return 0;
 }
 
-KBD *shell_kbd;
+JOE_TLS KBD *shell_kbd;
 
 int edloop(int flg)
 {
@@ -244,12 +254,12 @@ extern void setbreak();
 extern int breakflg;
 #endif
 
-const char * const *mainenv;
+JOE_TLS const char * const *mainenv;
 
-B *startup_log = NULL;
-static int logerrors = 0;
+JOE_TLS B *startup_log = NULL;
+static JOE_TLS int logerrors = 0;
 
-char i_msg[128];
+JOE_TLS char i_msg[128];
 
 void internal_msg(char *s)
 {
@@ -293,10 +303,36 @@ int ushowlog(W *w, int k)
 	return 1;
 }
 
-int main(int argc, char **real_argv, const char * const *envv)
+/* Initialize thread-local state for joe - called at start of joe_main */
+static void joe_init_state(void)
+{
+	exmsg = NULL;
+	xmsg = NULL;
+	usexmouse = 0;
+	xmouse = 0;
+	nonotice = 0;
+	noexmsg = 0;
+	pastehack = 0;
+	helpon = 0;
+	maint = NULL;
+	dostaupd = 1;
+	ahead = 0;
+	ungot = 0;
+	ungotc = 0;
+	type_backtick = NULL;
+	last_timer_time = 0;
+	cur_time = 0;
+	timer_macro_delay = 0;
+	timer_macro = NULL;
+	shell_kbd = NULL;
+	startup_log = NULL;
+	logerrors = 0;
+}
+
+__attribute__((visibility("default")))
+int joe_main(int argc, char **argv)
 {
 	CAP *cap;
-	char **argv = (char **)real_argv;
 	struct stat sbuf;
 	char *s;
 	char *t;
@@ -312,10 +348,16 @@ int main(int argc, char **real_argv, const char * const *envv)
 	int c;
 	int filesonly;
 
+	/* Initialize thread-local state for repeated invocations */
+	joe_init_state();
+
 	joe_iswinit();
 	joe_locale();
 
-	mainenv = envv;
+	/* mainenv not used on iOS */
+#ifndef JOE_IOS_BUILD
+	mainenv = NULL;  /* envv parameter removed for ios_system compatibility */
+#endif
 
 	vmem = vtmp();
 	startup_log = bfind_scratch("* Startup Log *");

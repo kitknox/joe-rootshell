@@ -7,6 +7,15 @@
  */
 #include "types.h"
 
+/* iOS system integration */
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST || TARGET_OS_VISION
+#include "ios_compat.h"
+#define JOE_IOS_BUILD 1
+#endif
+#endif
+
 /* Needed for TIOCGWINSZ detection below */
 #ifdef GWINSZ_IN_SYS_IOCTL
 #ifdef HAVE_SYS_IOCTL_H
@@ -39,7 +48,7 @@
 #endif
 #endif
 
-int idleout = 1;
+JOE_TLS int idleout = 1;
 
 #ifdef __amigaos
 #undef SIGTSTP
@@ -112,40 +121,40 @@ int idleout = 1;
 #define TILDE 0
 #endif
 
-/* Global configuration variables */
+/* Global configuration variables - thread-local for ios_system */
 
 int noxon = 0;			/* Set if ^S/^Q processing should be disabled */
 int Baud = 0;			/* Baud rate from joerc, cmd line or environment */
 
-/* The terminal */
+/* The terminal - thread-local for ios_system */
 
-FILE *termin = NULL;
-FILE *termout = NULL;
+JOE_TLS FILE *termin = NULL;
+JOE_TLS FILE *termout = NULL;
 
 /* Original state of tty */
 
 #ifdef HAVE_POSIX_TERMIOS
-struct termios oldterm;
+JOE_TLS struct termios oldterm;
 #else /* HAVE_POSIX_TERMIOS */
 #ifdef HAVE_SYSV_TERMIO
-static struct termio oldterm;
+static JOE_TLS struct termio oldterm;
 #else /* HAVE_SYSV_TERMIO */
-static struct sgttyb oarg;
-static struct tchars otarg;
-static struct ltchars oltarg;
+static JOE_TLS struct sgttyb oarg;
+static JOE_TLS struct tchars otarg;
+static JOE_TLS struct ltchars oltarg;
 #endif /* HAVE_SYSV_TERMIO */
 #endif /* HAVE_POSIX_TERMIOS */
 
-/* Output buffer, index and size */
+/* Output buffer, index and size - thread-local for ios_system */
 
-char *obuf = NULL;
-ptrdiff_t obufp = 0;
-ptrdiff_t obufsiz;
+JOE_TLS char *obuf = NULL;
+JOE_TLS ptrdiff_t obufp = 0;
+JOE_TLS ptrdiff_t obufsiz;
 
 /* The baud rate */
 
-long tty_baud;			/* Bits per second */
-long upc;			/* Microseconds per character */
+JOE_TLS long tty_baud;			/* Bits per second */
+JOE_TLS long upc;			/* Microseconds per character */
 
 /* TTY Speed code to baud-rate conversion table (this is dumb- is it really
  * too much to ask for them to just use an integer for the baud-rate?)
@@ -183,37 +192,39 @@ static long speeds_out[] = {
 #endif
 };
 
-/* Input buffer */
+/* Input buffer - thread-local for ios_system */
 
-int have = 0;			/* Set if we have pending input */
-char havec;	/* Character read in during pending input check */
-int leave = 0;			/* When set, typeahead checking is disabled */
+JOE_TLS int have = 0;			/* Set if we have pending input */
+JOE_TLS char havec;	/* Character read in during pending input check */
+JOE_TLS int leave = 0;			/* When set, typeahead checking is disabled */
 
 /* TTY mode flag.  1 for open, 0 for closed */
-static int ttymode = 0;
+static JOE_TLS int ttymode = 0;
 
 /* Signal state flag.  1 for joe, 0 for normal */
-static int ttysig = 0;
+static JOE_TLS int ttysig = 0;
 
-/* Stuff for shell windows */
+/* Stuff for shell windows - thread-local for ios_system */
 
-static pid_t kbdpid;		/* PID of kbd client */
-static int ackkbd = -1;		/* Editor acks keyboard client to this */
+static JOE_TLS pid_t kbdpid;		/* PID of kbd client */
+static JOE_TLS int ackkbd = -1;		/* Editor acks keyboard client to this */
 
-static int mpxfd;		/* Editor reads packets from this fd */
-static int mpxsfd;		/* Clients send packets to this fd */
+static JOE_TLS int mpxfd;		/* Editor reads packets from this fd */
+static JOE_TLS int mpxsfd;		/* Clients send packets to this fd */
 
-static int nmpx = 0;
-static int acceptch = NO_MORE_DATA;	/* =-1 if we have last packet */
+static JOE_TLS int nmpx = 0;
+static JOE_TLS int acceptch = NO_MORE_DATA;	/* =-1 if we have last packet */
 
 struct packet {
 	MPX *who;
 	ptrdiff_t size;
 	int ch;
 	char data[1024];
-} pack;
+};
 
-MPX asyncs[NPROC];
+static JOE_TLS struct packet pack;
+
+JOE_TLS MPX asyncs[NPROC];
 
 /* Set signals for JOE */
 void sigjoe(void)
@@ -336,6 +347,16 @@ void ttopnn(void)
 #endif
 
 	if (!termin) {
+#ifdef JOE_IOS_BUILD
+		/* On iOS, use thread-local streams from ios_system */
+		if (thread_stdin && thread_stdout) {
+			termin = thread_stdin;
+			termout = thread_stdout;
+		} else {
+			termin = stdin;
+			termout = stdout;
+		}
+#else
 		if (idleout ? (!(termin = stdin) || !(termout = stdout)) : (!(termin = fopen("/dev/tty", "r")) || !(termout = fopen("/dev/tty", "w")))) {
 			fputs(joe_gettext(_("Couldn\'t open /dev/tty\n")), stderr);
 			exit(1);
@@ -344,6 +365,7 @@ void ttopnn(void)
 			joe_set_signal(SIGWINCH, winchd);
 #endif
 		}
+#endif /* JOE_IOS_BUILD */
 	}
 
 	if (ttymode)
@@ -611,7 +633,7 @@ int ttflsh(void)
 
 void mpxdied(MPX *m);
 
-time_t last_time;
+JOE_TLS time_t last_time;
 
 char ttgetc(void)
 {

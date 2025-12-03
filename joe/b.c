@@ -7,6 +7,15 @@
  */
 #include "types.h"
 
+/* iOS system integration */
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST || TARGET_OS_VISION
+#include "ios_compat.h"
+#define JOE_IOS_BUILD 1
+#endif
+#endif
+
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
@@ -2705,6 +2714,11 @@ char *dequote(const char *s)
 
 FILE *joe_popen(const char *s, int write_mode)
 {
+#ifdef JOE_IOS_BUILD
+	/* iOS does not support fork/exec - shell commands are not available */
+	fprintf(thread_stderr, "Shell commands are not available on iOS\n");
+	return NULL;
+#else
 	int fds[2]; /* [0] is read, [1] is write */
 
 	if (-1 == pipe(fds))
@@ -2734,12 +2748,18 @@ FILE *joe_popen(const char *s, int write_mode)
 		close(fds[1]);
 		return fdopen(fds[0], "r");
 	}
+#endif /* JOE_IOS_BUILD */
 }
 
 void joe_pclose(FILE *f)
 {
+#ifdef JOE_IOS_BUILD
+	/* No-op on iOS since joe_popen always returns NULL */
+	(void)f;
+#else
 	fclose(f);
 	wait(NULL);
+#endif
 }
 
 /* Load file into new buffer and return the new buffer */

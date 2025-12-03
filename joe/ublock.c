@@ -7,6 +7,15 @@
  */
 #include "types.h"
 
+/* iOS system integration */
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST || TARGET_OS_VISION
+#include "ios_compat.h"
+#define JOE_IOS_BUILD 1
+#endif
+#endif
+
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -945,6 +954,17 @@ static int filtflg = 0;
 
 static int dofilt(W *w, char *s, void *object, int *notify)
 {
+#ifdef JOE_IOS_BUILD
+	/* Shell filter operations are not available on iOS */
+	BW *bw;
+	WIND_BW(bw, w);
+	(void)s;
+	(void)object;
+	if (notify)
+		*notify = 1;
+	msgnw(bw->parent, joe_gettext(_("Shell filter commands are not available on iOS")));
+	return -1;
+#else
 	int fr[2];
 	int fw[2];
 	int flg = 0;
@@ -1081,6 +1101,7 @@ static int dofilt(W *w, char *s, void *object, int *notify)
 		unmark(bw->parent, 0);
 	bw->cursor->xcol = piscol(bw->cursor);
 	return 0;
+#endif /* JOE_IOS_BUILD */
 }
 
 static B *filthist = NULL;

@@ -20,6 +20,23 @@
 #endif
 #endif
 
+#ifdef JOE_IOS_BUILD
+/* External globals that need resetting for ios_system re-invocation.
+ * These are non-TLS globals in other modules that persist between
+ * command invocations and must be reset to avoid stale pointer access.
+ */
+extern B bufs;
+extern B *filehist, *bufhist;
+extern B *findhist, *replhist;
+extern B *cmdhist, *yankbuf, *errbuf;
+extern B *runhist, *buildhist, *grephist;
+extern B *mathhist, *keymaphist;
+extern B *opthist, *ftypehist;
+extern int orphan, nobackups, exask;
+extern char *backpath;
+extern Screen *scr;
+#endif
+
 /* Thread-local globals for ios_system thread safety */
 JOE_TLS char *exmsg = NULL;		/* Message to display when exiting the editor */
 JOE_TLS char *xmsg;			/* Message to display when starting the editor */
@@ -329,6 +346,45 @@ static void joe_init_state(void)
 	logerrors = 0;
 }
 
+#ifdef JOE_IOS_BUILD
+/* Reset non-TLS global state for ios_system re-invocation.
+ * This is called at the start of joe_main() to ensure that global
+ * variables from other modules don't retain stale pointers from
+ * a previous invocation in a different thread.
+ */
+static void joe_reset_global_state(void)
+{
+	/* Reset buffer linked lists to empty (self-referential) */
+	bufs.link.next = &bufs;
+	bufs.link.prev = &bufs;
+
+	/* Reset all history buffers to NULL */
+	filehist = NULL;
+	bufhist = NULL;
+	findhist = NULL;
+	replhist = NULL;
+	cmdhist = NULL;
+	yankbuf = NULL;
+	errbuf = NULL;
+	runhist = NULL;
+	buildhist = NULL;
+	grephist = NULL;
+	mathhist = NULL;
+	keymaphist = NULL;
+	opthist = NULL;
+	ftypehist = NULL;
+
+	/* Reset ufile globals */
+	orphan = 0;
+	nobackups = 0;
+	exask = 0;
+	backpath = NULL;
+
+	/* Reset screen global - critical to prevent stale pointer access */
+	scr = NULL;
+}
+#endif
+
 __attribute__((visibility("default")))
 int joe_main(int argc, char **argv)
 {
@@ -350,6 +406,11 @@ int joe_main(int argc, char **argv)
 
 	/* Initialize thread-local state for repeated invocations */
 	joe_init_state();
+
+#ifdef JOE_IOS_BUILD
+	/* Reset non-TLS global state for ios_system re-invocation */
+	joe_reset_global_state();
+#endif
 
 	joe_iswinit();
 	joe_locale();

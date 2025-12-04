@@ -41,10 +41,13 @@ extern int tgetent(char *, const char *);
 int dopadding = 0;
 char *joeterm = NULL;
 
-/* Default termcap entry */
-
+/* Default termcap entry - includes 256 color support for iOS/modern terminals */
 char defentry[] = "\
 :co#80:li#25:am:\
+:Co#256:\
+:AF=\\E[38;5;%dm:AB=\\E[48;5;%dm:\
+:Sf=\\E[3%dm:Sb=\\E[4%dm:\
+:op=\\E[39;49m:\
 :ho=\\E[H:cm=\\E[%i%d;%dH:cV=\\E[%i%dH:\
 :up=\\E[A:UP=\\E[%dA:DO=\\E[%dB:nd=\\E[C:RI=\\E[%dC:LE=\\E[%dD:\
 :cd=\\E[J:ce=\\E[K:cl=\\E[H\\E[J:\

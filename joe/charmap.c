@@ -20,6 +20,16 @@
 #undef HAVE_SETLOCALE
 #endif
 
+/* iOS doesn't have proper nl_langinfo(CODESET) support - it returns US-ASCII
+ * even when LANG is set to UTF-8. Force use of joe_getcodeset() which parses
+ * the LANG environment variable correctly. */
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST || TARGET_OS_VISION
+#undef HAVE_SETLOCALE
+#endif
+#endif
+
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
 #	include <locale.h>
 #       include <langinfo.h>

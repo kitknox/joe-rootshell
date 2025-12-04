@@ -196,6 +196,11 @@ extern int Baud;			/* Baud rate from joerc, cmd line or environment */
 void tickoff(void);
 void tickon(void);
 
+#ifdef JOE_IOS_BUILD
+/* Reset TTY state for ios_system re-invocation */
+void tty_reset_state(void);
+#endif
+
 extern JOE_TLS time_t last_time; /* Current time in seconds */
 extern JOE_TLS int idleout; /* Clear to use /dev/tty for screen */
 

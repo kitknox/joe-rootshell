@@ -40,6 +40,10 @@ extern Screen *scr;
 /* Thread-local globals for ios_system thread safety */
 JOE_TLS char *exmsg = NULL;		/* Message to display when exiting the editor */
 JOE_TLS char *xmsg;			/* Message to display when starting the editor */
+/* Note: usexmouse, xmouse, nonotice, noexmsg, pastehack, helpon cannot be TLS
+ * because their addresses are used in static initializers in options.c.
+ * They are reset in joe_init_state() instead for ios_system re-invocation safety.
+ */
 int usexmouse=0;
 int xmouse=0;
 int nonotice;
@@ -344,6 +348,11 @@ static void joe_init_state(void)
 	shell_kbd = NULL;
 	startup_log = NULL;
 	logerrors = 0;
+
+#ifdef JOE_IOS_BUILD
+	/* Reset TTY state for ios_system re-invocation */
+	tty_reset_state();
+#endif
 }
 
 #ifdef JOE_IOS_BUILD

@@ -121,7 +121,10 @@ JOE_TLS int idleout = 1;
 #define TILDE 0
 #endif
 
-/* Global configuration variables - thread-local for ios_system */
+/* Global configuration variables
+ * Note: These cannot be TLS because their addresses are used in static initializers
+ * in options.c. They are reset in tty_reset_state() for ios_system re-invocation.
+ */
 
 int noxon = 0;			/* Set if ^S/^Q processing should be disabled */
 int Baud = 0;			/* Baud rate from joerc, cmd line or environment */
@@ -204,6 +207,41 @@ static JOE_TLS int ttymode = 0;
 /* Signal state flag.  1 for joe, 0 for normal */
 static JOE_TLS int ttysig = 0;
 
+#ifdef JOE_IOS_BUILD
+/* Reset TTY state for ios_system re-invocation.
+ * This must be called at the start of joe_main() to ensure
+ * clean state when joe is re-invoked in a new thread.
+ */
+void tty_reset_state(void)
+{
+	/* Reset configuration variables */
+	noxon = 0;
+	Baud = 0;
+
+	/* Reset terminal file handles */
+	termin = NULL;
+	termout = NULL;
+
+	/* Reset terminal state flags */
+	ttymode = 0;
+	ttysig = 0;
+
+	/* Reset input buffer state */
+	have = 0;
+	havec = 0;
+	leave = 0;
+	idleout = 1;
+
+	/* Reset output buffer - will be reallocated on ttopnn() */
+	if (obuf) {
+		joe_free(obuf);
+		obuf = NULL;
+	}
+	obufp = 0;
+	obufsiz = 0;
+}
+#endif
+
 /* Stuff for shell windows - thread-local for ios_system */
 
 static JOE_TLS pid_t kbdpid;		/* PID of kbd client */
@@ -268,7 +306,7 @@ void ttclose(void)
 	signrm();
 }
 
-static int winched = 0;
+static JOE_TLS int winched = 0;
 #ifdef SIGWINCH
 /* Window size interrupt handler */
 static RETSIGTYPE winchd(int unused)
@@ -280,7 +318,7 @@ static RETSIGTYPE winchd(int unused)
 
 /* Second ticker */
 
-int ticked = 0;
+JOE_TLS int ticked = 0;
 static RETSIGTYPE dotick(int unused)
 {
 	ticked = 1;
@@ -486,7 +524,7 @@ void ttclsn(void)
 
 /* Timer interrupt handler */
 
-static int yep;
+static JOE_TLS int yep;
 static RETSIGTYPE dosig(int unused)
 {
 	yep = 1;

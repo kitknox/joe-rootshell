@@ -42,9 +42,9 @@ char stdbuf[stdsiz];
 int guesscrlf = 0;
 int guessindent = 0;
 
-int berror;
-int force = 0;
-VFILE *vmem;
+JOE_TLS int berror;
+int force = 0;  /* Can't be TLS - address used in options.c static initializer */
+JOE_TLS VFILE *vmem;
 
 int nodeadjoe = 0;
 
@@ -106,8 +106,8 @@ static void grmem(H *hdr, char *ptr, short ofst, char *blk, short size)
 }
 
 
-static H nhdrs = { {&nhdrs, &nhdrs} };
-static H ohdrs = { {&ohdrs, &ohdrs} };
+static JOE_TLS H nhdrs;
+static JOE_TLS H ohdrs;
 
 /* Header allocation */
 static H *halloc(void)
@@ -137,7 +137,7 @@ static void hfreechn(H *h)
 }
 
 
-static P frptrs = { {&frptrs, &frptrs} };
+static JOE_TLS P frptrs;
 
 /* Pointer allocation */
 static P *palloc(void)
@@ -151,8 +151,29 @@ static void pfree(P *p)
 }
 
 /* Doubly linked list of buffers and free buffer structures */
-B bufs = { {&bufs, &bufs} };
-static B frebufs = { {&frebufs, &frebufs} };
+JOE_TLS B bufs;
+static JOE_TLS B frebufs;
+
+#ifdef JOE_IOS_BUILD
+/* Reset buffer system state for ios_system thread safety.
+ * Called at the start of joe_main() to initialize TLS variables
+ * that can't have static self-referential initializers.
+ */
+void b_reset_state(void)
+{
+	/* Initialize self-referential linked lists for TLS */
+	nhdrs.link.next = &nhdrs;
+	nhdrs.link.prev = &nhdrs;
+	ohdrs.link.next = &ohdrs;
+	ohdrs.link.prev = &ohdrs;
+	frptrs.link.next = &frptrs;
+	frptrs.link.prev = &frptrs;
+	bufs.link.next = &bufs;
+	bufs.link.prev = &bufs;
+	frebufs.link.next = &frebufs;
+	frebufs.link.prev = &frebufs;
+}
+#endif
 
 void set_file_pos_orphaned(void)
 {

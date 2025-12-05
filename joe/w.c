@@ -163,7 +163,7 @@ W *lastw(Screen *t)
 
 /* Create a screen object */
 
-Screen *scr;
+JOE_TLS Screen *scr = NULL;
 
 Screen *screate(SCRN *scrn)
 {

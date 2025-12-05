@@ -159,14 +159,18 @@ struct buffer {
 	                        /* Error parser for this buffer */
 };
 
-extern B bufs;
+extern JOE_TLS B bufs;
+
+#ifdef JOE_IOS_BUILD
+void b_reset_state(void);
+#endif
 
 /* 31744 */
 extern char stdbuf[stdsiz];	/* Convenient global buffer */
 
 extern int force;		/* Set to have final '\n' added to file */
 
-extern VFILE *vmem;		/* Virtual memory file used for buffer system */
+extern JOE_TLS VFILE *vmem;		/* Virtual memory file used for buffer system */
 
 extern const char *msgs[];	/* File access status messages */
 
@@ -313,7 +317,7 @@ B *bnext(void);
 B *bafter(B *b);
 B *bprev(void);
 
-extern int berror;	/* bload error status code (use msgs[-berror] to get message) */
+extern JOE_TLS int berror;	/* bload error status code (use msgs[-berror] to get message) */
 
 char **getbufs(void);
 

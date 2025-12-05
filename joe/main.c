@@ -25,7 +25,7 @@
  * These are non-TLS globals in other modules that persist between
  * command invocations and must be reset to avoid stale pointer access.
  */
-extern B bufs;
+extern JOE_TLS B bufs;
 extern B *filehist, *bufhist;
 extern B *findhist, *replhist;
 extern B *cmdhist, *yankbuf, *errbuf;
@@ -34,7 +34,8 @@ extern B *mathhist, *keymaphist;
 extern B *opthist, *ftypehist;
 extern int orphan, nobackups, exask;
 extern char *backpath;
-extern Screen *scr;
+extern JOE_TLS Screen *scr;
+extern int staen, staupd, keepup, bg_stalin, force;
 #endif
 
 /* Thread-local globals for ios_system thread safety */
@@ -363,9 +364,8 @@ static void joe_init_state(void)
  */
 static void joe_reset_global_state(void)
 {
-	/* Reset buffer linked lists to empty (self-referential) */
-	bufs.link.next = &bufs;
-	bufs.link.prev = &bufs;
+	/* Reset buffer system TLS state (self-referential linked lists) */
+	b_reset_state();
 
 	/* Reset all history buffers to NULL */
 	filehist = NULL;
@@ -389,8 +389,14 @@ static void joe_reset_global_state(void)
 	exask = 0;
 	backpath = NULL;
 
-	/* Reset screen global - critical to prevent stale pointer access */
-	scr = NULL;
+	/* Reset globals that can't be TLS (addresses used in options.c static initializers) */
+	staen = 0;
+	staupd = 0;
+	keepup = 0;
+	bg_stalin = 0;
+	force = 0;
+
+	/* Note: scr is now JOE_TLS and auto-initialized to NULL */
 }
 #endif
 

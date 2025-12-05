@@ -264,12 +264,30 @@ static JOE_TLS struct packet pack;
 
 JOE_TLS MPX asyncs[NPROC];
 
+#ifdef JOE_IOS_BUILD
+/* Reference count for signal handlers - process-global since signals are process-global.
+ * Only set signals on first joe instance, only restore on last instance exit.
+ */
+static int signal_refcount = 0;
+#include <pthread.h>
+static pthread_mutex_t signal_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 /* Set signals for JOE */
 void sigjoe(void)
 {
 	if (ttysig)
 		return;
 	ttysig = 1;
+#ifdef JOE_IOS_BUILD
+	pthread_mutex_lock(&signal_mutex);
+	if (signal_refcount++ > 0) {
+		/* Another joe instance already set signals */
+		pthread_mutex_unlock(&signal_mutex);
+		return;
+	}
+	pthread_mutex_unlock(&signal_mutex);
+#endif
 	joe_set_signal(SIGHUP, ttsig);
 	joe_set_signal(SIGTERM, ttsig);
 	joe_set_signal(SIGABRT, ttsig);
@@ -283,6 +301,15 @@ void signrm(void)
 	if (!ttysig)
 		return;
 	ttysig = 0;
+#ifdef JOE_IOS_BUILD
+	pthread_mutex_lock(&signal_mutex);
+	if (--signal_refcount > 0) {
+		/* Other joe instances still running - don't restore signals */
+		pthread_mutex_unlock(&signal_mutex);
+		return;
+	}
+	pthread_mutex_unlock(&signal_mutex);
+#endif
 	joe_set_signal(SIGABRT, SIG_DFL);
 	joe_set_signal(SIGHUP, SIG_DFL);
 	joe_set_signal(SIGTERM, SIG_DFL);

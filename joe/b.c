@@ -3449,6 +3449,16 @@ char *brzs(P *p, char *buf, ptrdiff_t size)
 
 static int ttsig_handled = 0;
 
+#ifdef JOE_IOS_BUILD
+/* Reset ttsig_handled flag for ios_system re-invocation.
+ * This prevents the double-fault handler from blocking on subsequent runs.
+ */
+void b_reset_ttsig(void)
+{
+	ttsig_handled = 0;
+}
+#endif
+
 RETSIGTYPE ttsig(int sig)
 {
         FILE *ttsig_f = 0;

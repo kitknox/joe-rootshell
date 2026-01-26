@@ -60,6 +60,10 @@ struct vfile {
 extern char *vbase;		/* Data first entry in vheader refers to */
 extern VPAGE **vheaders;	/* Array of headers */
 
+#ifdef JOE_IOS_BUILD
+void vfile_reset_state(void);
+#endif
+
 /* VFILE *vtmp(V);
  *
  * Open a temporary virtual file.  File goes away when closed.  No actual

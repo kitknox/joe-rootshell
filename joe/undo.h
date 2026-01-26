@@ -31,6 +31,10 @@ struct undo {
 extern int inundo; /* Set if inserts/deletes are part of an undo operation */
 extern int justkilled; /* Last edit was a delete, so store data in yank buffer */
 
+#ifdef JOE_IOS_BUILD
+void undo_reset_state(void);
+#endif
+
 UNDO *undomk(B *b);
 void undorm(UNDO *undo);
 int uundo(W *w, int k);

@@ -364,6 +364,15 @@ static void joe_init_state(void)
  */
 static void joe_reset_global_state(void)
 {
+	/* Reset vfile system state (critical for re-invocation after OOM exit) */
+	vfile_reset_state();
+
+	/* Reset undo system state */
+	undo_reset_state();
+
+	/* Reset crash handler flag */
+	b_reset_ttsig();
+
 	/* Reset buffer system TLS state (self-referential linked lists) */
 	b_reset_state();
 

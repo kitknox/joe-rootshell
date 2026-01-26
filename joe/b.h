@@ -163,6 +163,7 @@ extern JOE_TLS B bufs;
 
 #ifdef JOE_IOS_BUILD
 void b_reset_state(void);
+void b_reset_ttsig(void);
 #endif
 
 /* 31744 */

@@ -26,6 +26,32 @@ int justkilled = 0;
 
 UNDOREC frrecs = { {&frrecs, &frrecs} };
 
+#ifdef JOE_IOS_BUILD
+/* Reset undo system state for ios_system re-invocation.
+ * This is critical for avoiding crashes when joe exits due to
+ * vfile out-of-memory conditions, which leave linked lists corrupted.
+ */
+void undo_reset_state(void)
+{
+	/* Reinitialize self-referential linked lists */
+	undos.link.next = &undos;
+	undos.link.prev = &undos;
+	frdos.link.next = &frdos;
+	frdos.link.prev = &frdos;
+	yanked.link.next = &yanked;
+	yanked.link.prev = &yanked;
+	frrecs.link.next = &frrecs;
+	frrecs.link.prev = &frrecs;
+
+	/* Reset undo state flags */
+	inundo = 0;
+	inredo = 0;
+	nyanked = 0;
+	inyank = 0;
+	justkilled = 0;
+}
+#endif
+
 static UNDOREC *alrec(void)
 {
 	UNDOREC *rec = (UNDOREC *) alitem(&frrecs, SIZEOF(UNDOREC));

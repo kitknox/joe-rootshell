@@ -16,6 +16,32 @@ char *vbase;			/* Data first entry in vheader refers to */
 VPAGE **vheaders = NULL;	/* Array of header addresses */
 static ptrdiff_t vheadsz = 0;	/* No. entries allocated to vheaders */
 
+#ifdef JOE_IOS_BUILD
+/* Reset vfile system state for ios_system re-invocation.
+ * This is critical for avoiding crashes when joe exits due to
+ * vfile out-of-memory conditions, which leave the state corrupted.
+ */
+void vfile_reset_state(void)
+{
+	/* Reinitialize self-referential vfiles linked list */
+	vfiles.link.next = &vfiles;
+	vfiles.link.prev = &vfiles;
+
+	/* Clear free pages list */
+	freepages = NULL;
+
+	/* Clear hash table */
+	memset(htab, 0, sizeof(htab));
+
+	/* Reset memory tracking */
+	curvalloc = 0;
+	maxvalloc = ILIMIT;
+	vbase = NULL;
+	vheaders = NULL;
+	vheadsz = 0;
+}
+#endif
+
 void vflsh(void)
 {
 	VPAGE *vp;

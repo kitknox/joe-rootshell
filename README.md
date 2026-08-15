@@ -1,3 +1,22 @@
+# JOE — rootshell fork
+
+This repository is the [rootshell](https://www.rootshell.com)-maintained fork
+of [Joe's Own Editor](https://github.com/joe-editor/joe). It adapts JOE to run
+as an iOS command inside the rootshell application through `ios_system`, with
+support for repeated and concurrent invocations, iOS terminal sizing, UTF-8,
+and terminal colors. The fork is maintained independently and does not
+automatically track subsequent upstream changes.
+
+Because JOE is distributed under the GPL, the App Store version of rootshell
+currently does not link or include this fork.
+
+The `joe` command name remains unchanged. Report rootshell application
+problems in the
+[rootshell issue tracker](https://github.com/kitknox/rootshell/issues); report
+reproducible upstream JOE problems to the upstream project.
+
+---
+
 # Joe's Own Editor
 
 [User manual](docs/man.md) 

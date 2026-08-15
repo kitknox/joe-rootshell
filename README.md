@@ -15,6 +15,41 @@ problems in the
 [rootshell issue tracker](https://github.com/kitknox/rootshell/issues); report
 reproducible upstream JOE problems to the upstream project.
 
+## Swift binary package
+
+The `joe` Swift package product contains the JOE XCFramework and automatically
+links the matching `ios_system` package. It supports:
+
+- iOS 14 or later (arm64 device and arm64 simulator)
+- Mac Catalyst 14 or later (arm64 and x86_64)
+- visionOS 1 or later (arm64 device and arm64 simulator)
+
+Add this repository as a Swift package dependency and select the `joe` library
+product:
+
+```text
+https://github.com/kitknox/joe-rootshell.git
+```
+
+JOE's `joerc`, `ftyperc`, syntax definitions, and color schemes are application
+resources rather than framework resources. rootshell maintains those files in
+its own `Resources/joe` directory and installs them into its writable home
+directory at launch.
+
+## Building a release
+
+The JOE XCFramework is built from the parent `ios_system-rootshell` checkout,
+where this repository is the `joe` submodule. From that checkout's root, run:
+
+```sh
+swift run --package-path xcfs build joe
+```
+
+The command writes the ignored XCFramework, zip archive, and checksum table
+under the parent repository's `.build/` directory. For a release, update this
+manifest with the versioned GitHub release URL and generated checksum, commit
+and tag it, and attach `joe.xcframework.zip` to the matching GitHub release.
+
 ---
 
 # Joe's Own Editor

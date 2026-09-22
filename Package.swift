@@ -1,13 +1,13 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.2
 
 import PackageDescription
 
 let package = Package(
     name: "joe",
     platforms: [
-        .iOS(.v14),
-        .macCatalyst(.v14),
-        .visionOS(.v1),
+        .iOS(.v18),
+        .macCatalyst(.v18),
+        .visionOS(.v26),
     ],
     products: [
         .library(name: "joe", targets: ["joe", "JoeDependencies"]),
@@ -15,14 +15,14 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/kitknox/ios_system-rootshell.git",
-            exact: "0.1.0"
+            exact: "0.1.1"
         ),
     ],
     targets: [
         .binaryTarget(
             name: "joe",
-            url: "https://github.com/kitknox/joe-rootshell/releases/download/v0.1.0/joe.xcframework.zip",
-            checksum: "c8cc049f7d89fae749f170c3e850c1ac01de429fc3ff70cd94f845407a410c2b"
+            url: "https://github.com/kitknox/joe-rootshell/releases/download/v0.1.1/joe.xcframework.zip",
+            checksum: "82f51050784ef34b2cd3f4391e2228b47b16af3242f52e13e69ad5d2b9124dba"
         ),
         .target(
             name: "JoeDependencies",

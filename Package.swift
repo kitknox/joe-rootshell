@@ -21,7 +21,7 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "joe",
-            url: "https://github.com/kitknox/joe-rootshell/releases/download/v0.1.1/joe.xcframework.zip",
+            url: "https://github.com/kitknox/joe-rootshell/releases/download/v0.1.2/joe.xcframework.zip",
             checksum: "82f51050784ef34b2cd3f4391e2228b47b16af3242f52e13e69ad5d2b9124dba"
         ),
         .target(
